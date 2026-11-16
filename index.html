@@ -1,1 +1,287 @@
 
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABOL INTELLIGENCE</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:#030705;
+ color:#00ff77;
+ font-family:monospace;
+ padding:18px;
+}
+.terminal{
+ max-width:850px;
+ margin:20px auto;
+ border:1px solid #087c42;
+ border-radius:12px;
+ padding:18px;
+ background:#050b08;
+ box-shadow:0 0 25px #00ff7720;
+ min-height:85vh;
+}
+.header{
+ color:#00ff77;
+ border-bottom:1px solid #145b38;
+ padding-bottom:15px;
+ margin-bottom:18px;
+}
+.logo{
+ font-size:22px;
+ font-weight:bold;
+ letter-spacing:2px;
+}
+.sub{color:#648b74;font-size:12px;margin-top:7px}
+#output{white-space:pre-wrap;line-height:1.8;font-size:14px}
+.line{margin:7px 0}
+.green{color:#00ff77}
+.gray{color:#668575}
+.red{color:#ff5555}
+input{
+ width:100%;
+ background:transparent;
+ border:0;
+ outline:0;
+ color:#00ff77;
+ font:16px monospace;
+ caret-color:#00ff77;
+}
+.prompt{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ border-top:1px solid #145b38;
+ margin-top:15px;
+ padding-top:15px;
+}
+button{
+ background:#062b19;
+ border:1px solid #00a957;
+ color:#00ff77;
+ padding:9px 13px;
+ border-radius:6px;
+ cursor:pointer;
+ margin:4px;
+}
+button:hover{background:#0b492b}
+a{color:#00ff77;word-break:break-all}
+</style>
+</head>
+
+<body>
+<div class="terminal">
+ <div class="header">
+  <div class="logo">⚡ ABOL INTELLIGENCE</div>
+  <div class="sub">SYSTEM TERMINAL | VERSION 1.0</div>
+  <div class="sub">SECURE WEB INTERFACE</div>
+ </div>
+
+ <div id="output">
+  <div class="green">ABOL INTELLIGENCE SYSTEM</div>
+  <div class="gray">Type help to see available commands.</div>
+  <div class="gray">------------------------------------</div>
+ </div>
+
+ <div class="prompt">
+  <span>root@abol:~#</span>
+  <input id="command" autocomplete="off" autofocus>
+ </div>
+</div>
+
+<script>
+var output=document.getElementById("output");
+var input=document.getElementById("command");
+var mode="command";
+var step=0;
+var linkName="";
+var destination="";
+
+function print(text,cls){
+ var div=document.createElement("div");
+ div.className="line "+(cls||"");
+ div.textContent=text;
+ output.appendChild(div);
+ window.scrollTo(0,document.body.scrollHeight);
+}
+
+function printHTML(html){
+ var div=document.createElement("div");
+ div.className="line";
+ div.innerHTML=html;
+ output.appendChild(div);
+ window.scrollTo(0,document.body.scrollHeight);
+}
+
+function menu(){
+ print("","gray");
+ print("LINK MANAGER","green");
+ print("[1] Custom Link");
+ print("[2] Short Link");
+ print("[3] QR Link");
+ print("[4] Bio Link");
+ print("[5] Share Link");
+ print("[0] Back");
+ print("------------------------------");
+ mode="menu";
+}
+
+function submit(){
+ var value=input.value.trim();
+ if(!value)return;
+ print("root@abol:~# "+value,"gray");
+ input.value="";
+
+ if(mode==="command"){
+  var cmd=value.toLowerCase();
+
+  if(cmd==="help"){
+   print("AVAILABLE COMMANDS","green");
+   print("help       - Show commands");
+   print("link saz   - Open link manager");
+   print("clear      - Clear terminal");
+   print("about      - About system");
+   print("time       - Current time");
+  }
+  else if(cmd==="link saz"){
+   menu();
+  }
+  else if(cmd==="clear"){
+   output.innerHTML="";
+  }
+  else if(cmd==="about"){
+   print("ABOL INTELLIGENCE v1.0","green");
+   print("Terminal-based link manager.");
+  }
+  else if(cmd==="time"){
+   print(new Date().toLocaleString(),"green");
+  }
+  else{
+   print("Command not found. Type help.","red");
+  }
+ }
+ else if(mode==="menu"){
+  if(value==="1"){
+   print("Enter link name:","green");
+   mode="custom";
+   step=1;
+  }
+  else if(value==="2"){
+   print("Enter destination URL:","green");
+   mode="short";
+  }
+  else if(value==="3"){
+   print("Enter URL for QR:","green");
+   mode="qr";
+  }
+  else if(value==="4"){
+   print("Enter profile name:","green");
+   mode="bio";
+  }
+  else if(value==="5"){
+   print("Enter URL to share:","green");
+   mode="share";
+  }
+  else if(value==="0"){
+   mode="command";
+   print("Returned to terminal.","gray");
+  }
+  else{
+   print("Invalid option.","red");
+  }
+ }
+ else if(mode==="custom"){
+  if(step===1){
+   linkName=value;
+   print("Enter destination URL:","green");
+   step=2;
+  }else{
+   destination=value;
+   if(!validURL(destination)){
+    print("Invalid URL. Try again.","red");
+    return;
+   }
+   print("LINK CREATED","green");
+   print("NAME: "+linkName);
+   printHTML('DESTINATION: <a href="'+escapeAttr(destination)+'" target="_blank">'+escapeHTML(destination)+'</a>');
+   print("Note: This is a named link, not a hosted custom URL.","gray");
+   mode="menu";
+   step=0;
+  }
+ }
+ else if(mode==="short"){
+  if(!validURL(value)){
+   print("Invalid URL.","red");
+   return;
+  }
+  print("Connecting to short-link service...","gray");
+  makeShort(value);
+  mode="menu";
+ }
+ else if(mode==="qr"){
+  if(!validURL(value)){
+   print("Invalid URL.","red");
+   return;
+  }
+  print("QR CODE GENERATED","green");
+  printHTML('<img style="width:180px;background:white;padding:8px;border-radius:8px" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(value)+'">');
+  mode="menu";
+ }
+ else if(mode==="bio"){
+  var profile=value;
+  print("BIO LINK PREVIEW","green");
+  print("Profile: "+profile);
+  print("You can use this name in your public profile.");
+  mode="menu";
+ }
+ else if(mode==="share"){
+  if(!validURL(value)){
+   print("Invalid URL.","red");
+   return;
+  }
+  var share="https://t.me/share/url?url="+encodeURIComponent(value);
+  printHTML('<a href="'+share+'" target="_blank">OPEN TELEGRAM SHARE</a>');
+  mode="menu";
+ }
+}
+
+function validURL(value){
+ try{
+  var u=new URL(value);
+  return u.protocol==="https:"||u.protocol==="http:";
+ }catch(e){return false;}
+}
+
+function escapeHTML(s){
+ return s.replace(/[&<>"']/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+ });
+}
+function escapeAttr(s){return escapeHTML(s);}
+
+function makeShort(url){
+ fetch("https://is.gd/create.php?format=simple&url="+encodeURIComponent(url))
+ .then(function(r){return r.text();})
+ .then(function(result){
+  if(result.indexOf("http")===0){
+   print("SHORT LINK READY:","green");
+   printHTML('<a href="'+escapeAttr(result)+'" target="_blank">'+escapeHTML(result)+'</a>');
+  }else{
+   print("Short link service returned an error: "+result,"red");
+  }
+ })
+ .catch(function(){
+  print("Connection failed. Try again later.","red");
+ });
+}
+
+input.addEventListener("keydown",function(e){
+ if(e.key==="Enter")submit();
+});
+</script>
+</body>
+</html>
